@@ -125,6 +125,35 @@
   .msg { font-size: 14px; min-height: 0; }
   .msg.bad { color: var(--danger); } .msg.good { color: var(--ok); }
   [hidden] { display: none !important; }
+
+  .tabs { display:flex; gap:6px; margin:0 0 18px; background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); padding:4px; }
+  .tabs button { flex:1; min-height:44px; font:inherit; font-weight:500; border:0; border-radius:8px; background:transparent; color:var(--muted); cursor:pointer; }
+  .tabs button.on { background:var(--accent); color:var(--accent-ink); font-weight:700; }
+  .calcard { background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); padding:12px; }
+  .ch { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+  .ch button { font:inherit; min-height:40px; padding:0 12px; border:1.5px solid var(--line); background:transparent; color:var(--ink); border-radius:8px; cursor:pointer; }
+  .cg { display:grid; grid-template-columns:repeat(7,1fr); gap:4px; }
+  .wd { text-align:center; font-size:13px; color:var(--muted); padding:4px 0; }
+  .d { min-height:46px; font:inherit; border:1.5px solid transparent; border-radius:8px; background:transparent; color:var(--ink); cursor:pointer; padding:0; line-height:1.15; }
+  .d small { display:block; font-size:11px; font-weight:500; }
+  .d.c1 { background:var(--accent-soft); border-color:var(--accent); font-weight:700; }
+  .d.c2 { background:var(--accent); color:var(--accent-ink); font-weight:800; }
+  .d.tod { border-style:dashed; border-color:var(--ink); }
+  .d.sel { box-shadow:0 0 0 3px var(--ink); }
+  .tot { text-align:center; color:var(--muted); font-size:13px; margin-top:8px; }
+  .legend { font-size:13px; color:var(--muted); margin:10px 0; }
+  .sw { display:inline-block; width:14px; height:14px; border-radius:4px; margin:0 0 -2px 4px; background:var(--accent-soft); border:1.5px solid var(--accent); }
+  .sw.two { background:var(--accent); margin-right:14px; }
+  #dayList h3 { margin:14px 0 6px; font-size:16px; }
+  .it { background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); padding:10px 12px; margin-bottom:8px; display:grid; gap:2px; }
+  .it small, .muted { color:var(--muted); }
+  .modal { position:fixed; inset:0; background:rgba(0,0,0,.5); display:flex; align-items:flex-end; justify-content:center; z-index:20; }
+  .modal .sheet { width:100%; max-width:560px; background:var(--bg); border-radius:14px 14px 0 0; padding:14px 14px calc(14px + env(safe-area-inset-bottom,0px)); }
+  .modal .row { display:flex; gap:8px; margin-top:10px; } .modal .row button { flex:1; }
+  .urow { display:flex; align-items:center; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--line); }
+  .urow button { font:inherit; color:var(--danger); background:transparent; border:1.5px solid var(--danger); border-radius:8px; min-height:38px; padding:0 12px; cursor:pointer; }
+  .opt-line { display:flex; align-items:center; gap:8px; font-size:14px; }
+  .opt-line input { width:20px; height:20px; }
 </style>
 </head>
 <body>
@@ -134,14 +163,29 @@
     <p>مشخصات مشتری، دستگاه و عکس‌های نصب</p>
   </header>
 
-  <form id="form" novalidate autocomplete="off">
+  <section id="login">
     <fieldset>
-      <legend>رمز ثبت</legend>
-      <label class="f" for="accessCode">رمز (فقط یک‌بار وارد می‌شود و روی این دستگاه ذخیره می‌ماند)</label>
-      <input type="password" id="accessCode" class="num" autocomplete="off">
-      <div class="err" data-for="accessCode"></div>
+      <legend>ورود</legend>
+      <div class="grid">
+        <div class="full"><label class="f" for="lu">نام کاربری</label>
+          <input type="text" id="lu" class="num" autocomplete="username" autocapitalize="none"></div>
+        <div class="full"><label class="f" for="lp">رمز</label>
+          <input type="password" id="lp" class="num" autocomplete="current-password"></div>
+      </div>
+      <div class="msg bad" id="lmsg" style="margin:8px 0"></div>
+      <button type="button" class="go" id="loginBtn">ورود</button>
     </fieldset>
+  </section>
 
+  <div id="app" hidden>
+  <nav class="tabs">
+    <button type="button" id="t_form">ثبت نصب</button>
+    <button type="button" id="t_cal">تقویم</button>
+    <button type="button" id="t_acc">حساب</button>
+  </nav>
+  <div id="v_form">
+
+  <form id="form" novalidate autocomplete="off">
     <fieldset>
       <legend>مشخصات خریدار</legend>
       <div class="grid">
@@ -178,7 +222,7 @@
       <div class="grid">
         <div class="full">
           <label class="f" for="installDate">تاریخ نصب (شمسی)</label>
-          <input type="tel" id="installDate" class="num" inputmode="numeric" placeholder="1405/01/01" maxlength="10">
+          <input type="text" id="installDate" class="num" readonly placeholder="برای انتخاب تاریخ بزنید" style="cursor:pointer">
           <div class="err" data-for="installDate"></div>
         </div>
         <div class="full">
@@ -199,25 +243,6 @@
       <legend>عکس‌ها</legend>
       <div class="photos" id="photos"></div>
     </fieldset>
-    <details class="chg" id="chg">
-      <summary>تغییر رمز ثبت</summary>
-      <div class="body">
-        <div>
-          <label class="f" for="curCode">رمز فعلی (اگر هنوز رمزی تعیین نشده، خالی بگذارید)</label>
-          <input type="password" id="curCode" class="num" autocomplete="off">
-        </div>
-        <div>
-          <label class="f" for="newCode">رمز جدید (حداقل ۶ کاراکتر)</label>
-          <input type="password" id="newCode" class="num" autocomplete="off">
-        </div>
-        <div>
-          <label class="f" for="newCode2">تکرار رمز جدید</label>
-          <input type="password" id="newCode2" class="num" autocomplete="off">
-        </div>
-        <div class="msg" id="chgMsg"></div>
-        <button type="button" class="sec" id="chgBtn">ذخیره رمز جدید</button>
-      </div>
-    </details>
   </form>
 
   <section class="done" id="done" hidden>
@@ -226,9 +251,50 @@
     <p id="doneMsg" style="color:var(--muted)"></p>
     <button class="go" id="again" type="button">ثبت نصب جدید</button>
   </section>
+  </div>
+
+  <div id="v_cal" hidden>
+    <div class="calcard" id="calBox"></div>
+    <div class="legend"><i class="sw"></i>یک نصب <i class="sw two"></i>دو نصب یا بیشتر</div>
+    <div id="dayList"></div>
+  </div>
+
+  <div id="v_acc" hidden>
+    <p>وارد شده: <b id="who"></b> <span id="roleTxt" style="color:var(--muted)"></span></p>
+    <fieldset>
+      <legend>تغییر رمز</legend>
+      <div class="grid">
+        <div class="full"><label class="f" for="pwOld">رمز فعلی</label><input type="password" id="pwOld" class="num"></div>
+        <div class="full"><label class="f" for="pwNew">رمز جدید (حداقل ۴ کاراکتر)</label><input type="password" id="pwNew" class="num"></div>
+        <div class="full"><label class="f" for="pwNew2">تکرار رمز جدید</label><input type="password" id="pwNew2" class="num"></div>
+      </div>
+      <div class="msg" id="pwMsg" style="margin:8px 0"></div>
+      <button type="button" class="sec" id="pwBtn" style="width:100%">ذخیره رمز جدید</button>
+    </fieldset>
+    <fieldset id="adminBox" hidden>
+      <legend>مدیریت کاربران</legend>
+      <div class="grid">
+        <div><label class="f" for="nuName">نام کاربری</label><input type="text" id="nuName" class="num" autocapitalize="none"></div>
+        <div><label class="f" for="nuPass">رمز</label><input type="text" id="nuPass" class="num"></div>
+        <div class="full"><label class="opt-line"><input type="checkbox" id="nuAdmin"> دسترسی مدیر (ساخت و حذف کاربر)</label></div>
+      </div>
+      <div class="msg" id="nuMsg" style="margin:8px 0"></div>
+      <button type="button" class="sec" id="nuBtn" style="width:100%">ایجاد کاربر</button>
+      <div id="userList" style="margin-top:14px"></div>
+    </fieldset>
+    <button type="button" class="sec" id="logoutBtn" style="width:100%">خروج از حساب</button>
+  </div>
+  </div>
 </div>
 
-<div class="bar" id="bar">
+<div class="modal" id="pick" hidden>
+  <div class="sheet">
+    <div class="calcard" id="pickBox"></div>
+    <div class="row"><button type="button" class="sec" id="pickToday">امروز</button><button type="button" class="sec" id="pickClose">بستن</button></div>
+  </div>
+</div>
+
+<div class="bar" id="bar" hidden>
   <div class="in">
     <div class="status" id="status"></div>
     <button class="go" id="submit" type="button">ثبت اطلاعات</button>
@@ -260,9 +326,6 @@
   ['phone','nationalCode','installDate'].forEach(id => {
     $(id).addEventListener('input', e => { e.target.value = latin(e.target.value).replace(/[^\d/]/g, ''); });
   });
-
-  /* ---------- رمز ثبت ---------- */
-  try { $('accessCode').value = localStorage.getItem('accessCode') || ''; } catch (e) {}
 
   /* ---------- تاریخ امروز شمسی ---------- */
   function todayJalali() {
@@ -358,10 +421,9 @@
   function validate() {
     let first = null;
     const bad = (k, m) => { setErr(k, m); if (!first) first = $(k) || document.querySelector('[data-for="' + k + '"]'); };
-    ['accessCode','firstName','lastName','phone','nationalCode','address','installDate','capacity','model'].forEach(clearErr);
+    ['firstName','lastName','phone','nationalCode','address','installDate','capacity','model'].forEach(clearErr);
     document.querySelectorAll('.photo').forEach(p => p.classList.remove('invalid'));
 
-    if (!$('accessCode').value.trim()) bad('accessCode', 'رمز ثبت را وارد کنید');
     if (!$('firstName').value.trim()) bad('firstName', 'نام را وارد کنید');
     if (!$('lastName').value.trim()) bad('lastName', 'نام خانوادگی را وارد کنید');
     if (!/^09\d{9}$/.test($('phone').value)) bad('phone', 'شماره ۱۱ رقمی و با ۰۹ شروع شود');
@@ -389,7 +451,7 @@
     const btn = $('submit'); btn.disabled = true; btn.textContent = 'در حال ارسال…';
     setStatus('عکس‌ها در حال آپلود است؛ صفحه را نبندید');
     const payload = {
-      accessCode: $('accessCode').value.trim(),
+      action: 'saveInstall', token: TOKEN,
       firstName: $('firstName').value, lastName: $('lastName').value,
       phone: $('phone').value, nationalCode: $('nationalCode').value,
       address: $('address').value, installDate: $('installDate').value,
@@ -404,56 +466,180 @@
     if (API_URL.indexOf('http') !== 0) { fail('آدرس API در فایل تنظیم نشده است'); return; }
 
     // text/plain باعث می‌شود مرورگر درخواست پیش‌پرواز (CORS preflight) نفرستد
-    fetch(API_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify(payload)
-    })
-      .then(r => r.json())
+    post(payload)
       .then(res => {
         if (!res.ok) { fail(res.error || 'خطا در ثبت'); return; }
-        try { localStorage.setItem('accessCode', payload.accessCode); } catch (e) {}
         btn.disabled = false; btn.textContent = 'ثبت اطلاعات'; setStatus('');
         $('form').hidden = true; $('bar').hidden = true; $('done').hidden = false;
         $('doneMsg').textContent = 'شناسه ثبت: ' + res.id;
+        refreshInstalls();
         window.scrollTo(0, 0);
       })
       .catch(() => fail('ارتباط با سرور برقرار نشد'));
   });
 
-  /* ---------- تغییر رمز ---------- */
-  $('chgBtn').addEventListener('click', () => {
-    const msg = $('chgMsg'), btn = $('chgBtn');
-    const say = (t, cls) => { msg.textContent = t; msg.className = 'msg ' + (cls || ''); };
-    const cur = $('curCode').value.trim(), nw = $('newCode').value.trim(), nw2 = $('newCode2').value.trim();
-    if (nw.length < 6) { say('رمز جدید باید حداقل ۶ کاراکتر باشد', 'bad'); return; }
-    if (nw !== nw2) { say('تکرار رمز با رمز جدید یکی نیست', 'bad'); return; }
-    if (API_URL.indexOf('http') !== 0) { say('آدرس API در فایل تنظیم نشده است', 'bad'); return; }
-    btn.disabled = true; say('در حال ذخیره…');
-    fetch(API_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action: 'changeCode', accessCode: cur, newCode: nw })
-    })
-      .then(r => r.json())
-      .then(res => {
-        btn.disabled = false;
-        if (!res.ok) { say(res.error || 'خطا در تغییر رمز', 'bad'); return; }
-        try { localStorage.setItem('accessCode', nw); } catch (e) {}
-        $('accessCode').value = nw;
-        $('curCode').value = ''; $('newCode').value = ''; $('newCode2').value = '';
-        say('رمز تغییر کرد. در سایر دستگاه‌ها باید رمز جدید را وارد کنید.', 'good');
-      })
-      .catch(() => { btn.disabled = false; say('ارتباط با سرور برقرار نشد', 'bad'); });
-  });
-
   $('again').addEventListener('click', () => {
-    const ac = $('accessCode').value; $('form').reset(); $('accessCode').value = ac; $('installDate').value = todayJalali();
+    $('form').reset(); $('installDate').value = todayJalali();
     state.capacity = ''; state.model = ''; state.photos = {};
     renderCaps(); renderModels(); renderPhotos();
     $('form').hidden = false; $('bar').hidden = false; $('done').hidden = true;
     window.scrollTo(0, 0);
   });
+  /* ===== ورود و نشست ===== */
+  let TOKEN = '', USER = '', ROLE = '';
+  function post(body) {
+    return fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body) })
+      .then(r => r.json()).then(res => { if (!res.ok && res.expired) endSession(); return res; });
+  }
+  function api(action, data) { return post(Object.assign({ action: action, token: TOKEN }, data || {})); }
+  const say = (id, t, cls) => { const e = $(id); e.textContent = t; e.className = 'msg ' + (cls || ''); };
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const pad = n => ('0' + n).slice(-2);
+  function normD(s) { const m = latin(s).match(/(\d{4})\D+(\d{1,2})\D+(\d{1,2})/); return m ? m[1] + '/' + pad(m[2]) + '/' + pad(m[3]) : ''; }
+
+  function endSession() {
+    TOKEN = USER = ROLE = ''; try { localStorage.removeItem('sess'); } catch (e) {}
+    $('login').hidden = false; $('app').hidden = true; $('bar').hidden = true;
+  }
+  function startSession(r) {
+    TOKEN = r.token; USER = r.username; ROLE = r.role;
+    try { localStorage.setItem('sess', JSON.stringify({ t: TOKEN, u: USER, r: ROLE })); } catch (e) {}
+    $('login').hidden = true; $('app').hidden = false;
+    $('who').textContent = USER; $('roleTxt').textContent = ROLE === 'admin' ? '(مدیر)' : '(کاربر)';
+    $('adminBox').hidden = ROLE !== 'admin';
+    showTab('form'); refreshInstalls();
+  }
+  function showTab(t) {
+    ['form', 'cal', 'acc'].forEach(k => { $('v_' + k).hidden = k !== t; $('t_' + k).classList.toggle('on', k === t); });
+    $('bar').hidden = t !== 'form' || !$('done').hidden;
+    if (t === 'cal') loadCal();
+    if (t === 'acc' && ROLE === 'admin') loadUsers();
+    window.scrollTo(0, 0);
+  }
+  ['form', 'cal', 'acc'].forEach(k => $('t_' + k).addEventListener('click', () => showTab(k)));
+
+  function doLogin() {
+    const u = latin($('lu').value.trim()), p = latin($('lp').value);
+    if (!u || !p) { say('lmsg', 'نام کاربری و رمز را وارد کنید', 'bad'); return; }
+    $('loginBtn').disabled = true; say('lmsg', 'در حال ورود…');
+    post({ action: 'login', username: u, password: p }).then(r => {
+      $('loginBtn').disabled = false;
+      if (!r.ok) { say('lmsg', r.error || 'خطا در ورود', 'bad'); return; }
+      $('lp').value = ''; say('lmsg', ''); startSession(r);
+    }).catch(() => { $('loginBtn').disabled = false; say('lmsg', 'ارتباط با سرور برقرار نشد', 'bad'); });
+  }
+  $('loginBtn').addEventListener('click', doLogin);
+  $('lp').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+  $('logoutBtn').addEventListener('click', () => { api('logout'); endSession(); });
+
+  /* ===== تقویم شمسی (بر پایه Intl مرورگر) ===== */
+  const MONTHS = ['فروردین','اردیبهشت','خرداد','تیر','مرداد','شهریور','مهر','آبان','آذر','دی','بهمن','اسفند'];
+  const jf = new Intl.DateTimeFormat('en-US-u-ca-persian-nu-latn', { year: 'numeric', month: 'numeric', day: 'numeric', timeZone: 'UTC' });
+  function jp(dt) { const p = jf.formatToParts(dt).reduce((a, x) => (a[x.type] = +x.value, a), {}); return { y: p.year, m: p.month, d: p.day }; }
+  function todayJ() { const n = new Date(); return jp(new Date(Date.UTC(n.getFullYear(), n.getMonth(), n.getDate(), 12))); }
+  function jStart(y, m) {
+    let dt = new Date(Date.UTC(y + 621, 2, 21, 12) + Math.round((m - 1) * 30.4) * 864e5);
+    for (let i = 0; i < 60; i++) {
+      const p = jp(dt), diff = (p.y - y) * 372 + (p.m - m) * 31 + (p.d - 1);
+      if (!diff) return dt;
+      dt = new Date(dt.getTime() - Math.sign(diff) * 864e5);
+    }
+    return dt;
+  }
+  function jLen(y, m) { return m <= 6 ? 31 : m <= 11 ? 30 : Math.round((jStart(y + 1, 1) - jStart(y, 12)) / 864e5); }
+
+  function makeCal(box, getMarks, onPick, getSel) {
+    const c = { y: 0, m: 0 };
+    c.go = (y, m) => { if (m < 1) { m = 12; y--; } if (m > 12) { m = 1; y++; } c.y = y; c.m = m; draw(); };
+    function draw() {
+      const marks = getMarks(), sel = getSel(), t = todayJ(), tk = t.y + '/' + pad(t.m) + '/' + pad(t.d);
+      const first = (jStart(c.y, c.m).getUTCDay() + 1) % 7, len = jLen(c.y, c.m), pre = c.y + '/' + pad(c.m) + '/';
+      let total = 0;
+      let h = '<div class="ch"><button type="button" data-n="-1">ماه قبل</button><b>' + MONTHS[c.m - 1] + ' ' + faNum(c.y) + '</b><button type="button" data-n="1">ماه بعد</button></div><div class="cg">';
+      ['ش', 'ی', 'د', 'س', 'چ', 'پ', 'ج'].forEach(w => h += '<div class="wd">' + w + '</div>');
+      for (let i = 0; i < first; i++) h += '<div></div>';
+      for (let d = 1; d <= len; d++) {
+        const k = pre + pad(d), n = marks[k] || 0; total += n;
+        h += '<button type="button" class="d' + (n ? (n > 1 ? ' c2' : ' c1') : '') + (k === tk ? ' tod' : '') + (k === sel ? ' sel' : '') +
+             '" data-k="' + k + '">' + faNum(d) + (n ? '<small>' + faNum(n) + '</small>' : '') + '</button>';
+      }
+      box.innerHTML = h + '</div><div class="tot">نصب‌های این ماه: ' + faNum(total) + '</div>';
+      box.querySelectorAll('[data-n]').forEach(b => b.onclick = () => c.go(c.y, c.m + +b.dataset.n));
+      box.querySelectorAll('[data-k]').forEach(b => b.onclick = () => onPick(b.dataset.k));
+    }
+    return c;
+  }
+
+  let INSTALLS = [], MARKS = {}, selDay = '';
+  function refreshInstalls() {
+    return api('getInstalls').then(r => {
+      if (r.ok) { INSTALLS = r.items; MARKS = {}; INSTALLS.forEach(i => { const k = normD(i.date); if (k) MARKS[k] = (MARKS[k] || 0) + 1; }); }
+      return r;
+    }).catch(() => ({ ok: false, error: 'ارتباط با سرور برقرار نشد' }));
+  }
+  const calMain = makeCal($('calBox'), () => MARKS, k => showDay(k), () => selDay);
+  function showDay(k) {
+    selDay = k; calMain.go(calMain.y, calMain.m);
+    const items = INSTALLS.filter(i => normD(i.date) === k);
+    let h = '<h3>' + faNum(k) + '</h3>';
+    if (!items.length) h += '<p class="muted">نصبی در این روز ثبت نشده است.</p>';
+    items.forEach(i => h += '<div class="it"><b>' + esc(i.name) + '</b><span>' + esc(faNum(i.cap)) + ' — ' + esc(i.model) + '</span><small>ثبت‌کننده: ' + esc(i.by) + '</small></div>');
+    $('dayList').innerHTML = h;
+  }
+  function loadCal() {
+    const t = todayJ(); if (!calMain.y) calMain.go(t.y, t.m);
+    refreshInstalls().then(r => {
+      if (!r.ok) { $('dayList').innerHTML = '<p class="msg bad">' + esc(r.error || 'خطا') + '</p>'; return; }
+      showDay(selDay || t.y + '/' + pad(t.m) + '/' + pad(t.d));
+    });
+  }
+
+  /* ===== انتخاب تاریخ نصب با تقویم ===== */
+  const pickCal = makeCal($('pickBox'), () => MARKS, k => { $('installDate').value = k; clearErr('installDate'); $('pick').hidden = true; }, () => normD($('installDate').value));
+  function openPick(y, m) { pickCal.go(y, m); $('pick').hidden = false; }
+  $('installDate').addEventListener('click', () => { const v = normD($('installDate').value), t = todayJ(); openPick(v ? +v.slice(0, 4) : t.y, v ? +v.slice(5, 7) : t.m); });
+  $('pickToday').addEventListener('click', () => { const t = todayJ(); $('installDate').value = t.y + '/' + pad(t.m) + '/' + pad(t.d); clearErr('installDate'); $('pick').hidden = true; });
+  $('pickClose').addEventListener('click', () => { $('pick').hidden = true; });
+  $('pick').addEventListener('click', e => { if (e.target === $('pick')) $('pick').hidden = true; });
+
+  /* ===== حساب کاربری ===== */
+  function busy(btn, msgId, fn) {
+    btn.disabled = true;
+    fn().then(() => { btn.disabled = false; }).catch(() => { btn.disabled = false; say(msgId, 'ارتباط با سرور برقرار نشد', 'bad'); });
+  }
+  $('pwBtn').addEventListener('click', () => {
+    const o = latin($('pwOld').value), n = latin($('pwNew').value), n2 = latin($('pwNew2').value);
+    if (n.length < 4) { say('pwMsg', 'رمز جدید باید حداقل ۴ کاراکتر باشد', 'bad'); return; }
+    if (n !== n2) { say('pwMsg', 'تکرار رمز یکسان نیست', 'bad'); return; }
+    say('pwMsg', 'در حال ذخیره…');
+    busy($('pwBtn'), 'pwMsg', () => api('changePassword', { oldPassword: o, newPassword: n }).then(r => {
+      if (!r.ok) { say('pwMsg', r.error, 'bad'); return; }
+      ['pwOld', 'pwNew', 'pwNew2'].forEach(i => $(i).value = ''); say('pwMsg', 'رمز تغییر کرد', 'good');
+    }));
+  });
+  $('nuBtn').addEventListener('click', () => {
+    const u = latin($('nuName').value.trim()), p = latin($('nuPass').value.trim());
+    say('nuMsg', 'در حال ایجاد…');
+    busy($('nuBtn'), 'nuMsg', () => api('createUser', { username: u, password: p, admin: $('nuAdmin').checked }).then(r => {
+      if (!r.ok) { say('nuMsg', r.error, 'bad'); return; }
+      $('nuName').value = ''; $('nuPass').value = ''; $('nuAdmin').checked = false;
+      say('nuMsg', 'کاربر ایجاد شد', 'good'); loadUsers();
+    }));
+  });
+  function loadUsers() {
+    api('listUsers').then(r => {
+      if (!r.ok) { $('userList').innerHTML = '<p class="msg bad">' + esc(r.error || '') + '</p>'; return; }
+      $('userList').innerHTML = r.users.map(u => '<div class="urow"><span>' + esc(u.u) + (u.role === 'admin' ? ' <small class="muted">(مدیر)</small>' : '') + '</span>' +
+        (u.u.toLowerCase() === USER.toLowerCase() ? '' : '<button type="button" data-del="' + esc(u.u) + '">حذف</button>') + '</div>').join('');
+      $('userList').querySelectorAll('[data-del]').forEach(b => b.onclick = () => {
+        if (!confirm('کاربر «' + b.dataset.del + '» حذف شود؟')) return;
+        api('deleteUser', { username: b.dataset.del }).then(x => { if (!x.ok) say('nuMsg', x.error, 'bad'); loadUsers(); });
+      });
+    });
+  }
+
+  /* ===== بازیابی نشست قبلی ===== */
+  try { const s = JSON.parse(localStorage.getItem('sess') || 'null'); if (s && s.t) startSession({ token: s.t, username: s.u, role: s.r }); } catch (e) {}
 })();
 </script>
 </body>
