@@ -5,6 +5,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ثبت نصب کولر</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0b7a85">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700;800&display=swap" rel="stylesheet">
 <style>
@@ -161,6 +167,7 @@
   <header>
     <h1>ثبت نصب کولر</h1>
     <p>مشخصات مشتری، دستگاه و عکس‌های نصب</p>
+    <button type="button" class="sec" id="installBtn" hidden style="margin-top:10px;padding:0 16px">نصب برنامه روی این دستگاه</button>
   </header>
 
   <section id="login">
@@ -637,6 +644,13 @@
       });
     });
   }
+
+  /* ===== نصب به‌صورت برنامه (PWA) ===== */
+  let deferred = null;
+  window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferred = e; $('installBtn').hidden = false; });
+  $('installBtn').addEventListener('click', () => { if (!deferred) return; deferred.prompt(); deferred.userChoice.then(() => { deferred = null; $('installBtn').hidden = true; }); });
+  window.addEventListener('appinstalled', () => { $('installBtn').hidden = true; });
+  if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
 
   /* ===== بازیابی نشست قبلی ===== */
   try { const s = JSON.parse(localStorage.getItem('sess') || 'null'); if (s && s.t) startSession({ token: s.t, username: s.u, role: s.r }); } catch (e) {}
